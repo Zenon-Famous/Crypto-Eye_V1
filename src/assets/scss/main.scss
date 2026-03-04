@@ -1,0 +1,37 @@
+$enable-negative-margins: true;
+
+@use "./_globals.scss" as *;
+@use "./_variables.scss" as *;
+
+@import "bootstrap/scss/bootstrap";
+
+body,
+#app {
+  width: 100%;
+  height: 100vh;
+  overflow-y: hidden;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+
+  @each $key, $value in $water-colors {
+    --water-#{$key}: #{$value};
+  }
+  @each $key, $value in $stone-colors {
+    --stone-#{$key}: #{$value};
+  }
+  @each $key, $value in $ice-colors {
+    --ice-#{$key}: #{$value};
+  }
+  @each $key, $value in $clay-colors {
+    --clay-#{$key}: #{$value};
+  }
+  @each $key, $value in $adobe-colors {
+    --adobe-#{$key}: #{$value};
+  }
+
+
+}
