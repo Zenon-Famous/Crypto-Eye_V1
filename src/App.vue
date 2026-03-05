@@ -7,7 +7,6 @@ const templates = {
 }
 
 const route = useRoute();
-console.log(route)
 </script>
 
 <template>

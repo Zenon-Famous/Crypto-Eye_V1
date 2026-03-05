@@ -1,32 +1,31 @@
 <template>
-    <DefaultGrafBars :data="data" />
+  <div>
+    <DefaultGrafBars v-if="loaded" />
+    <div v-else class="loading">Carregando gráfico...</div>
+  </div>
 </template>
+
 <script setup>
-import { onMounted, onUnmounted, computed } from 'vue';
-import { useBinanceStore } from '@/stores/webSocket.store';
+import { ref, onMounted } from 'vue'
+import { useBinanceHistoryStore } from '@/stores/binanceHistory.store'
 import DefaultGrafBars from '../components/DefaultGrafBars.vue'
-import { storeToRefs } from "pinia";
 
-const binanceStore = useBinanceStore();
-const { cryptos } = storeToRefs(binanceStore);
+const binanceStore = useBinanceHistoryStore()
+const loaded = ref(false)
 
-const data = computed(() => [
-  {
-    name: cryptos.value.name,
-    data: cryptos.value
-  }
-])
+onMounted(async () => {
+  const endTime = Date.now();
+  const startTime = endTime - 24 * 60 * 60 * 10000;
 
-
-onMounted(() => {
-    binanceStore.connect('BTCUSDT', '1m');
+  await binanceStore.getHistory('BTCUSDT', '1m', startTime, endTime)
+  loaded.value = true
 })
-
-// onUnmounted(() => {
-//     binanceStore.disconnect();
-// })
-
 </script>
-<style scoped>
 
+<style scoped>
+.loading {
+  color: #fff;
+  text-align: center;
+  padding: 50px;
+}
 </style>

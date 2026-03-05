@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const http = axios.create({
-  baseURL: 'https://api.binance.com/api/v3',
+  baseURL: import.meta.env.VITE_BASE_API,
   timeout: 10000,
 });
 
