@@ -1,89 +1,107 @@
 <template>
-  <apexchart
-    :ref="chartRef"
-    type="candlestick"
-    height="1000"
-    :options="options"
-    :series="data"
-  />
+  <div ref="chartContainer" style="width:100%; height:100vh"></div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { createChart, CandlestickSeries } from 'lightweight-charts'
+import { useBinanceStore } from '@/stores/binanceWebSocket.store'
+import { useBinanceHistoryStore } from '@/stores/binanceHistory.store'
 
-const props = defineProps({
-    data: {
-        type: Array,
-        required: true
+const chartContainer = ref(null)
+const chart = ref(null)
+const candleSeries = ref(null)
+
+const wsStore = useBinanceStore()
+const historyStore = useBinanceHistoryStore()
+
+function initChart() {
+  chart.value = createChart(chartContainer.value, {
+    layout: {
+      background: { color: '#0f1116' },
+      textColor: '#d1d4dc'
+    },
+    grid: {
+      vertLines: { color: 'transparent' },
+      horzLines: { color: 'transparent' }
+    },
+    rightPriceScale: {
+      borderColor: '#2a2e39'
+    },
+    timeScale: {
+      borderColor: '#2a2e39',
+      timeVisible: true,
+      secondsVisible: false,
+      rightOffset: 20
+    },
+    localization: {
+      locale: 'pt-BR'
     }
+  })
+
+  candleSeries.value = chart.value.addSeries(CandlestickSeries, {
+    upColor: '#00E5FF',
+    downColor: '#FF1744',
+    borderVisible: false,
+    wickUpColor: '#00E5FF',
+    wickDownColor: '#FF1744'
+  })
+}
+
+function mapCandles(candles) {
+  return candles.map(c => ({
+    time: Math.floor(c.x.getTime() / 1000),
+    open: c.y[0],
+    high: c.y[1],
+    low: c.y[2],
+    close: c.y[3]
+  }))
+}
+
+function loadHistory() {
+  const historyData = mapCandles(historyStore.cryptosHistory)
+  candleSeries.value.setData(historyData)
+}
+
+function updateRealtimeCandles() {
+  const realtime = wsStore.cryptosRealtime
+  if (!realtime || !realtime.length) return  // <-- evita erro
+
+  realtime.forEach(candle => {
+    candleSeries.value.update({
+      time: Math.floor(candle.x.getTime() / 1000),
+      open: candle.y[0],
+      high: candle.y[1],
+      low: candle.y[2],
+      close: candle.y[3]
+    })
+  })
+}
+
+const combinedCandles = computed(() => {
+  const hist = historyStore.cryptosHistory
+  const realtime = wsStore.cryptosRealtime
+
+  if (!hist.length) return realtime
+
+  const histFiltered = hist.filter(h => !realtime.some(r => r.x.getTime() === h.x.getTime()))
+
+  return [...histFiltered, ...realtime].sort((a, b) => a.x - b.x)
 })
 
-const chartRef = ref(null)
-const zoomRange = ref(null)
+onMounted(async () => {
+  initChart()
 
-const options = ref({
-  chart: {
-    type: 'candlestick',
-    background: '#000000',     
-    toolbar: { show: true },
-    animations: {
-      enabled: false 
-    },
-    zoom: { 
-      enabled: true, 
-      type: 'x',               
-      autoScaleYaxis: true,
-      zoomedArea: {
-        fill: { color: '#90CAF9', opacity: 0.4 },
-        stroke: { color: '#0D47A1', opacity: 0.4, width: 1 }
-      }
-    },
-    events: {
-      zoomed: (chartContext, { xaxis }) => {
-        zoomRange.value = { min: xaxis.min, max: xaxis.max } 
-      }
-    }
-  },
-  title: {
-    text: 'Simulação Trader',
-    align: 'center',
-    style: { color: '#FFFFFF' }  
-  },
-  xaxis: {
-    type: 'datetime',
-    labels: { style: { colors: '#FFFFFF' } } ,
-    
-  },
-  yaxis: {
-    position: 'right',
-    tooltip: { enabled: true },
-    labels: {
-      style: { colors: '#FFFFFF' },
-      formatter: val => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
-    }
-  },
-  tooltip: {
-    theme: 'dark',
-    y: {
-      formatter: val => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
-    }
-  },
-  grid: {
-    borderColor: '#444444',
-  }
+  loadHistory()
+
+  wsStore.connect('BTCUSDT', '1m')
+
+  wsStore.socket.addEventListener('message', () => {
+    updateRealtimeCandles()
+  })
 })
-watch(
-  () => props.data,
-  async (newVal) => {
-    if (chartRef.value) {
-  
-      await nextTick()
-      chartRef.value.updateSeries([{ data: newVal }], false)
-       if (zoomRange.value) {
-        chartRef.value.zoomX(zoomRange.value.min, zoomRange.value.max)
-      }
-    }
-  },
-  { deep: true }
-)
+watch(combinedCandles, (newCandles) => {
+  const data = mapCandles(newCandles)
+  candleSeries.value.setData(data)
+})
 </script>
