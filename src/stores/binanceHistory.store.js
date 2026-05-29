@@ -25,7 +25,8 @@ export const useBinanceHistoryStore = defineStore("binanceHistoryStore", {
 
           const candles = res.data.map(c => ({
             x: new Date(c[0]),
-            y: [Number(c[1]), Number(c[2]), Number(c[3]), Number(c[4])]
+            y: [Number(c[1]), Number(c[2]), Number(c[3]), Number(c[4])],
+            volume: Number(c[5]),
           }));
 
           allCandles.push(...candles);

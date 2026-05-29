@@ -9,10 +9,12 @@ body,
 #app {
   width: 100%;
   height: 100vh;
-  overflow-y: hidden;
-  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-primary);
+  overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
+  color: var(--text-color);
 }
 
 :root {
@@ -33,5 +35,16 @@ body,
     --adobe-#{$key}: #{$value};
   }
 
-
+  --button-order-buy: #00c582;
+  --button-order-sell: #ff2d55;
+  --text-color: #e8eaed;
+  --text-muted: #8b9299;
+  --bg-primary: #0a0a0b;
+  --bg-secondary: #111214;
+  --bg-panel: #16181c;
+  --bg-elevated: #1c1e24;
+  --border-color: #2a2e39;
+  --border-subtle: #1a1d24;
+  --green: #00c582;
+  --red: #ff2d55;
 }
