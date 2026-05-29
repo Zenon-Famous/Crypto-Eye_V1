@@ -18,7 +18,8 @@ export const useBinanceStore = defineStore("binanceStore", {
       this.socket = createWebSocket(crypto, timeframe, (kline) => {
         const candle = {
           x: new Date(kline.t),
-          y: [Number(kline.o), Number(kline.h), Number(kline.l), Number(kline.c)]
+          y: [Number(kline.o), Number(kline.h), Number(kline.l), Number(kline.c)],
+          volume: Number(kline.v),
         };
         const last = this.cryptosRealtime[this.cryptosRealtime.length - 1];
 

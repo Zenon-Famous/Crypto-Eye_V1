@@ -1,0 +1,27 @@
+.btn {
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.btn-no-borders {
+  background: transparent;
+  border: none;
+}
+
+.input-style{
+  background-color: transparent;
+  color: antiquewhite;
+  
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+p
+{
+  color:aliceblue;
+  margin: 0 !important;
+}
