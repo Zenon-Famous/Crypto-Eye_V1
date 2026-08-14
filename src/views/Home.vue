@@ -4,7 +4,7 @@
     <div class="trading-dashboard__body d-flex">
       <SidebarTools />
       <main class="trading-dashboard__chart">
-        <DefaultGrafBars v-if="loaded" />
+        <DefaultGrafBars v-if="loaded" @loading="(val) => loaded = val" />
         <div v-else class="trading-dashboard__loading">
           <div class="trading-dashboard__spinner" />
           <span>Carregando gráfico...</span>
@@ -18,19 +18,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useBinanceHistoryStore } from '@/stores/binanceHistory.store'
+import { useBinanceExchangeInfoStore } from '@/stores/binanceExchangeInfo.store'
 import TheNavbar from '@/components/layout/TheNavbar.vue'
 import SidebarTools from '@/components/layout/SidebarTools.vue'
 import TradingPanel from '@/components/trading/TradingPanel.vue'
 import DefaultGrafBars from '@/components/DefaultGrafBars.vue'
 
 const binanceStore = useBinanceHistoryStore()
+const exchangeInfoStore = useBinanceExchangeInfoStore()
 const loaded = ref(false)
 
 onMounted(async () => {
   const endTime = Date.now()
-  const startTime = endTime - 24 * 60 * 60 * 1000
+  const startTime = endTime - 24 * 60 * 60 * 10000
 
   await binanceStore.getHistory('BTCUSDT', '1m', startTime, endTime)
+  await exchangeInfoStore.getExchangeInfo()
   loaded.value = true
 })
 </script>

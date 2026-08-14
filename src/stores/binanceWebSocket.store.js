@@ -12,7 +12,7 @@ export const useBinanceStore = defineStore("binanceStore", {
   actions: {
     connect(crypto, timeframe) {
       this.currentPair = crypto.toUpperCase();
-
+      console.log(this.socket, "socket")
       if (this.socket && this.socket.readyState === 1) this.socket.close();
 
       this.socket = createWebSocket(crypto, timeframe, (kline) => {

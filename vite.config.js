@@ -11,5 +11,12 @@ export default defineConfig(({ mode }) => {
           "@": resolve(__dirname, "src"),
         },
       },
+      css: {
+        preprocessorOptions: {
+          scss: {
+            silenceDeprecations: ['import', 'global-builtin', 'color-functions'],
+          },
+        },
+      },
     }
 })

@@ -6,10 +6,7 @@
         <span class="trading-panel__timeframe">{{ ui.timeframe }}</span>
       </div>
       <div class="trading-panel__countdown" :title="'Tempo restante do candle'">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
+        <i class="icon-clock" aria-hidden="true" />
         <span>{{ countdown }}</span>
       </div>
     </div>
@@ -36,15 +33,11 @@
 
     <div class="trading-panel__actions d-flex flex-column gap-2">
       <button type="button" class="btn-order btn-order--buy" @click="ui.placeOrder('buy')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="18 15 12 9 6 15" />
-        </svg>
+        <i class="icon-chevron-up" aria-hidden="true" />
         COMPRAR
       </button>
       <button type="button" class="btn-order btn-order--sell" @click="ui.placeOrder('sell')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        <i class="icon-chevron-down" aria-hidden="true" />
         VENDER
       </button>
     </div>
@@ -168,6 +161,11 @@ function onAmountInput(event) {
     font-weight: 600;
     color: var(--text-color);
     font-variant-numeric: tabular-nums;
+
+    i {
+      font-size: 14px;
+      line-height: 1;
+    }
   }
 
   &__amount {
@@ -285,7 +283,6 @@ function onAmountInput(event) {
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  overflow: hidden;
 
   &__btn {
     width: 40px;
@@ -300,23 +297,28 @@ function onAmountInput(event) {
     &:hover {
       background: var(--bg-secondary);
       color: var(--text-color);
+      border-radius: 8px;
     }
   }
 
   &__field {
-    flex: 1;
-    border: none;
+    width: 100%;
+    border: none !important;
     background: transparent;
     text-align: center;
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-color);
-    outline: none;
-    -moz-appearance: textfield;
+
+     &:focus {
+      outline: none !important;
+      border: none !important;
+    }
 
     &::-webkit-outer-spin-button,
     &::-webkit-inner-spin-button {
       -webkit-appearance: none;
+      border: none;
       margin: 0;
     }
   }
@@ -353,6 +355,11 @@ function onAmountInput(event) {
 
   &:hover {
     filter: brightness(1.06);
+  }
+
+  i {
+    font-size: 16px;
+    line-height: 1;
   }
 }
 

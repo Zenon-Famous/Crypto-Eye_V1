@@ -10,7 +10,7 @@
       :aria-label="tool.label"
       @click="activeTool = tool.id"
     >
-      <span v-html="tool.icon" />
+      <i :class="tool.icon" aria-hidden="true" />
     </button>
     <div class="sidebar-tools__spacer" />
     <button
@@ -20,10 +20,7 @@
       aria-label="Limpar desenhos"
       @click="activeTool = null"
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="3 6 5 6 21 6" />
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      </svg>
+      <i class="icon-trash" aria-hidden="true" />
     </button>
   </aside>
 </template>
@@ -37,37 +34,37 @@ const tools = [
   {
     id: 'cursor',
     label: 'Cursor',
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>',
+    icon: 'icon-cursor',
   },
   {
     id: 'trend',
     label: 'Linha de tendência',
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="4"/></svg>',
+    icon: 'icon-slash',
   },
   {
     id: 'horizontal',
     label: 'Linha horizontal',
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/></svg>',
+    icon: 'icon-dash-lg',
   },
   {
     id: 'fibonacci',
     label: 'Fibonacci',
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V4M4 20h16M4 14h10M4 8h6"/></svg>',
+    icon: 'icon-bar-chart-line',
   },
   {
     id: 'text',
     label: 'Texto',
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/></svg>',
+    icon: 'icon-type-bold',
   },
   {
     id: 'shape',
     label: 'Formas',
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>',
+    icon: 'icon-square',
   },
   {
     id: 'measure',
     label: 'Medição',
-    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h5M17 12h5M7 8v8M17 8v8"/></svg>',
+    icon: 'icon-layout-split',
   },
 ]
 </script>
@@ -102,6 +99,12 @@ const tools = [
 
     &--danger:hover {
       color: var(--red);
+    }
+
+    i {
+      color: var(--text-muted) !important;
+      font-size: 18px;
+      line-height: 1;
     }
   }
 

@@ -18,7 +18,7 @@
 
     <div class="navbar-trading__center d-flex align-items-center">
       <div class="asset-badge">
-        <span class="asset-badge__pair">{{ ui.assetPair }}</span>
+        <span class="asset-badge__pair">{{ binanceStore.currentPair }}</span>
         <span class="asset-badge__tag">{{ ui.assetTag }}</span>
       </div>
       <span class="navbar-trading__volume">
@@ -28,16 +28,10 @@
 
     <div class="navbar-trading__right d-flex align-items-center">
       <button class="navbar-trading__icon-btn" type="button" aria-label="Notificações">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
+        <i class="icon-bell" aria-hidden="true" />
       </button>
       <button class="navbar-trading__icon-btn" type="button" aria-label="Perfil">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
+        <i class="icon-person" aria-hidden="true" />
       </button>
       <div class="navbar-trading__balance">
         <span class="navbar-trading__balance-label">Conta Real</span>
@@ -49,10 +43,11 @@
 </template>
 
 <script setup>
-import { useTradingUiStore } from '@/stores/tradingUi.store'
+import { useTradingUiStore } from '@/stores/tradingUi.store';
+import { useBinanceStore } from '@/stores/binanceWebSocket.store';
 
 const ui = useTradingUiStore()
-
+const binanceStore = useBinanceStore()
 const menuItems = ['Trade', 'Comprar Cripto', 'Educação', 'Mais']
 </script>
 
@@ -135,6 +130,11 @@ const menuItems = ['Trade', 'Comprar Cripto', 'Educação', 'Mais']
     &:hover {
       background: var(--bg-elevated);
       color: var(--text-color);
+    }
+
+    i {
+      font-size: 18px;
+      line-height: 1;
     }
   }
 
