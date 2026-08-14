@@ -12,7 +12,6 @@ export const useBinanceHistoryStore = defineStore("binanceHistoryStore", {
       try {
         const allCandles = [];
         let start = startTime;
-
         while (start < endTime) {
           const res = await HistoryCandleService.getHistoryCandles(
             crypto,
@@ -20,7 +19,6 @@ export const useBinanceHistoryStore = defineStore("binanceHistoryStore", {
             start,
             endTime
           );
-
           if (!res.data.length) break;
 
           const candles = res.data.map(c => ({
