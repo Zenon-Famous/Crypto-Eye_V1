@@ -71,3 +71,46 @@ test('switching markets closes connecting sockets and ignores stale messages', (
   sockets[1].onMessage({ ...candle, t: 2000 })
   assert.equal(store.cryptosRealtime.length, 1)
 })
+
+test('pending orders execute once and preserve their original market and amount', () => {
+  const store = loadStore('../src/stores/tradingUi.store.js')
+  store.setTradeAmount(20)
+  store.queueOrder('buy')
+  const id = store.pendingOrders[0].id
+  store.assetPair = 'ETH/USDT'
+  store.setTradeAmount(50)
+  store.executeOrder(id)
+  store.executeOrder(id)
+  assert.equal(store.pendingOrders.length, 0)
+  assert.equal(store.operations.length, 1)
+  assert.equal(store.operations[0].pair, 'BTC/USDT')
+  assert.equal(store.operations[0].value, 20)
+  store.closeOperation(store.operations[0].id)
+  assert.equal(store.operations.length, 0)
+  assert.equal(store.history[0].status, 'Encerrada')
+})
+
+test('cancelled orders enter history and cannot execute afterwards', () => {
+  const store = loadStore('../src/stores/tradingUi.store.js')
+  store.queueOrder('sell')
+  const id = store.pendingOrders[0].id
+  store.cancelOrder(id)
+  store.executeOrder(id)
+  assert.equal(store.operations.length, 0)
+  assert.equal(store.history[0].status, 'Cancelada')
+  assert.equal(store.notifications.length, 2)
+  store.markNotificationsRead()
+  assert.ok(store.notifications.every(item => item.read))
+})
+
+test('demo credit rejects invalid amounts and profile names are bounded', () => {
+  const store = loadStore('../src/stores/tradingUi.store.js')
+  for (const value of [-1, Infinity, NaN, 10001]) assert.equal(store.addDemoFunds(value), false)
+  assert.equal(store.balance, 0.85)
+  assert.equal(store.addDemoFunds(100), true)
+  assert.equal(store.balance, 100.85)
+  store.saveProfile('  David  ')
+  assert.equal(store.profile.name, 'David')
+  store.saveProfile('x'.repeat(100))
+  assert.equal(store.profile.name.length, 60)
+})
