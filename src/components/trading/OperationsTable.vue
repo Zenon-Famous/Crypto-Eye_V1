@@ -3,7 +3,7 @@
     <table>
       <thead>
         <tr>
-          <th>Valor</th>
+          <th>Ativo / lado</th><th>Valor</th>
           <th>Tempo</th>
         </tr>
       </thead>
@@ -16,11 +16,11 @@
             { 'operations-table__row--active': op.active },
           ]"
         >
-          <td>${{ op.value.toFixed(2) }}</td>
+          <td>{{ op.pair }} · {{ op.type === "buy" ? "Compra" : "Venda" }}</td><td>${{ op.value.toFixed(2) }}</td>
           <td>{{ op.time }}</td>
         </tr>
         <tr v-if="!operations.length">
-          <td colspan="2" class="operations-table__empty">Nenhuma operação</td>
+          <td colspan="3" class="operations-table__empty">Nenhuma operação</td>
         </tr>
       </tbody>
     </table>

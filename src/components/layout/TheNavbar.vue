@@ -6,7 +6,7 @@
         <a
           v-for="item in menuItems"
           :key="item"
-          href="#"
+          href="#" aria-disabled="true" tabindex="-1"
           class="navbar-trading__link"
           @click.prevent
         >
@@ -18,36 +18,36 @@
 
     <div class="navbar-trading__center d-flex align-items-center">
       <div class="asset-badge">
-        <span class="asset-badge__pair">{{ binanceStore.currentPair }}</span>
+        <span class="asset-badge__pair">{{ ui.assetPair }}</span>
         <span class="asset-badge__tag">{{ ui.assetTag }}</span>
       </div>
       <span class="navbar-trading__volume">
-        Vol. 24h <strong>{{ ui.formattedVolume }}</strong>
+        Ambiente de simulação
       </span>
     </div>
 
     <div class="navbar-trading__right d-flex align-items-center">
-      <button class="navbar-trading__icon-btn" type="button" aria-label="Notificações">
+      <button class="navbar-trading__icon-btn" type="button" aria-label="Notificações indisponíveis" disabled>
         <i class="icon-bell" aria-hidden="true" />
       </button>
-      <button class="navbar-trading__icon-btn" type="button" aria-label="Perfil">
+      <button class="navbar-trading__icon-btn" type="button" aria-label="Perfil indisponível" disabled>
         <i class="icon-person" aria-hidden="true" />
       </button>
       <div class="navbar-trading__balance">
-        <span class="navbar-trading__balance-label">Conta Real</span>
+        <span class="navbar-trading__balance-label">Conta demonstrativa</span>
         <span class="navbar-trading__balance-value">${{ ui.balance.toFixed(2) }}</span>
       </div>
-      <button class="navbar-trading__deposit btn" type="button">Depositar</button>
+      <button class="navbar-trading__deposit btn" type="button" disabled title="Depósitos indisponíveis na simulação">Depositar</button>
     </div>
   </header>
 </template>
 
 <script setup>
 import { useTradingUiStore } from '@/stores/tradingUi.store';
-import { useBinanceStore } from '@/stores/binanceWebSocket.store';
+
 
 const ui = useTradingUiStore()
-const binanceStore = useBinanceStore()
+
 const menuItems = ['Trade', 'Comprar Cripto', 'Educação', 'Mais']
 </script>
 

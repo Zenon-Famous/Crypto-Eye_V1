@@ -11,7 +11,7 @@ export const useTradingUiStore = defineStore('tradingUi', {
     volume24h: 847002,
     activeTab: 'operations',
     operations: [],
-    footerStats: { buyTotal: 36, sellTotal: 0 },
+    footerStats: { buyTotal: 0, sellTotal: 0 },
   }),
 
   getters: {
@@ -39,15 +39,17 @@ export const useTradingUiStore = defineStore('tradingUi', {
     },
     setTradeAmount(value) {
       const parsed = Number(value)
-      if (!Number.isNaN(parsed) && parsed >= 1) {
-        this.tradeAmount = parsed
+      if (Number.isFinite(parsed) && parsed >= 1) {
+        this.tradeAmount = Math.min(9999, Math.round(parsed * 100) / 100)
       }
     },
     placeOrder(type) {
+      if (!['buy', 'sell'].includes(type)) return
       const now = new Date()
       const time = now.toLocaleTimeString('pt-BR', { hour12: false })
       this.operations.unshift({
-        id: Date.now(),
+        id: crypto.randomUUID(),
+        pair: this.assetPair,
         value: this.tradeAmount,
         time,
         type,

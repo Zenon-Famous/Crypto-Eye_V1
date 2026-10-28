@@ -48,3 +48,20 @@ body,
   --green: #00c582;
   --red: #ff2d55;
 }
+
+:root { color-scheme: dark; }
+:focus-visible { outline: 2px solid var(--green) !important; outline-offset: 3px; }
+::selection { background: var(--green); color: var(--bg-primary); }
+button:disabled, [aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+select, .chart-toolbar button { background: var(--bg-elevated); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; }
+button, input, select { font: inherit; }
+body { font-variant-numeric: tabular-nums; scrollbar-color: var(--border-color) var(--bg-panel); }
+@media (max-width: 1100px) { .navbar-trading__menu, .navbar-trading__volume { display: none !important; } }
+@media (max-width: 760px) {
+  body, #app { height: auto; overflow: auto; }
+  .navbar-trading { padding: 12px !important; height: auto !important; gap: 12px !important; flex-wrap: wrap; }
+  .navbar-trading__right { margin-left: auto; }
+  .navbar-trading__icon-btn, .navbar-trading__deposit { display: none !important; }
+  .navbar-trading__center { order: 3; flex-basis: 100% !important; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

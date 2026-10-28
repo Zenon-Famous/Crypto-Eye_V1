@@ -12,44 +12,44 @@
     </div>
 
     <div class="trading-panel__amount">
-      <label class="trading-panel__label">Valor (US$)</label>
+      <label for="trade-amount" class="trading-panel__label">Valor (US$)</label>
       <div class="amount-input d-flex align-items-center">
-        <button type="button" class="amount-input__btn" @click="ui.decrementAmount()">−</button>
+        <button type="button" class="amount-input__btn" aria-label="Diminuir valor" @click="ui.decrementAmount()">−</button>
         <input
           type="number"
-          class="amount-input__field"
+          id="trade-amount" class="amount-input__field"
           :value="ui.tradeAmount"
-          min="1"
+          min="1" max="9999" step="0.01"
           @input="onAmountInput"
         />
-        <button type="button" class="amount-input__btn" @click="ui.incrementAmount()">+</button>
+        <button type="button" class="amount-input__btn" aria-label="Aumentar valor" @click="ui.incrementAmount()">+</button>
       </div>
     </div>
 
     <div class="trading-panel__profit">
-      <span class="trading-panel__profit-label">Receita +{{ ui.profitPercent }}%</span>
+      <span class="trading-panel__profit-label">Retorno simulado +{{ ui.profitPercent }}%</span>
       <span class="trading-panel__profit-value">+${{ ui.potentialReturn }}</span>
     </div>
 
     <div class="trading-panel__actions d-flex flex-column gap-2">
       <button type="button" class="btn-order btn-order--buy" @click="ui.placeOrder('buy')">
         <i class="icon-chevron-up" aria-hidden="true" />
-        COMPRAR
+        SIMULAR COMPRA
       </button>
       <button type="button" class="btn-order btn-order--sell" @click="ui.placeOrder('sell')">
         <i class="icon-chevron-down" aria-hidden="true" />
-        VENDER
+        SIMULAR VENDA
       </button>
     </div>
 
-    <div class="trading-panel__tabs d-flex">
+    <p class="simulation-note">Ordens locais, sem execução ou movimentação financeira.</p><div class="trading-panel__tabs d-flex">
       <button
         v-for="tab in tabs"
         :key="tab.id"
         type="button"
         class="trading-panel__tab"
         :class="{ 'trading-panel__tab--active': ui.activeTab === tab.id }"
-        @click="ui.setActiveTab(tab.id)"
+        :aria-pressed="ui.activeTab === tab.id" @click="ui.setActiveTab(tab.id)"
       >
         {{ tab.label }}
       </button>
@@ -373,5 +373,9 @@ function onAmountInput(event) {
 
 .text-muted {
   color: var(--text-muted);
+}
+.simulation-note { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px !important; }
+@media (max-width: 760px) {
+  .trading-panel { width: 100%; min-width: 0; height: auto; min-height: 440px; border-left: 0; border-top: 1px solid var(--border-color); }
 }
 </style>
