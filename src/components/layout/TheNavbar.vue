@@ -26,7 +26,7 @@
       </RouterLink>
       <div class="navbar-trading__balance">
         <span class="navbar-trading__balance-label">Conta demonstrativa</span>
-        <span class="navbar-trading__balance-value">${{ ui.balance.toFixed(2) }}</span>
+        <span class="navbar-trading__balance-value">{{ ui.availableBalance.toFixed(2) }} USDT</span>
       </div>
       <RouterLink to="/carteira" class="navbar-trading__deposit btn">Saldo demo</RouterLink>
     </div>

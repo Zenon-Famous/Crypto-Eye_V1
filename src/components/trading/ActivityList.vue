@@ -3,9 +3,9 @@
     <p v-if="!items.length" class="activity-empty">{{ empty }}</p>
     <article v-for="item in items" :key="item.id" class="activity-item">
       <div><strong>{{ item.pair }}</strong> <span>{{ item.type === 'buy' ? 'Compra' : 'Venda' }}</span></div>
-      <div class="activity-meta"><span>US$ {{ item.value.toFixed(2) }}</span><time>{{ item.time }}</time><span v-if="item.status">{{ item.status }}</span></div>
-      <div v-if="mode === 'orders'" class="activity-actions"><button type="button" @click="ui.executeOrder(item.id)">Executar simulação</button><button type="button" @click="ui.cancelOrder(item.id)">Cancelar</button></div>
-      <button v-else-if="mode === 'operations'" type="button" @click="ui.closeOperation(item.id)">Encerrar simulação</button>
+      <div class="activity-meta"><span>{{ Number(item.value).toFixed(2) }} USDT</span><time>{{ item.time }}</time><span v-if="item.quantity">{{ item.quantity.toFixed(8) }} {{ item.pair.split('/')[0] }}</span><span v-if="item.price">Preço: {{ item.price.toFixed(2) }}</span><span v-if="item.limitPrice">Limite: {{ item.limitPrice.toFixed(2) }}</span><span v-if="item.fee !== undefined">Taxa: {{ item.fee.toFixed(6) }}</span><span v-if="item.type === 'sell' && item.realizedPnl !== undefined">Resultado: {{ item.realizedPnl.toFixed(4) }} USDT</span><span v-if="item.status">{{ item.status }}</span></div>
+      <div v-if="mode === 'orders'" class="activity-actions"><span>Aguardando preço limite</span><button type="button" @click="ui.cancelOrder(item.id)">Cancelar</button></div>
+      <button v-else-if="mode === 'operations'" type="button" @click="ui.closeOperation(item.id)">Arquivar registro</button>
     </article>
   </div>
 </template>

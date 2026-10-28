@@ -12,7 +12,7 @@
     </div>
 
     <div class="trading-panel__amount">
-      <label for="trade-amount" class="trading-panel__label">Valor (US$)</label>
+      <label for="trade-amount" class="trading-panel__label">Valor da ordem (USDT)</label>
       <div class="amount-input d-flex align-items-center">
         <button type="button" class="amount-input__btn" aria-label="Diminuir valor" @click="ui.decrementAmount()">−</button>
         <input
@@ -26,12 +26,9 @@
       </div>
     </div>
 
-    <div class="trading-panel__profit">
-      <span class="trading-panel__profit-label">Retorno simulado +{{ ui.profitPercent }}%</span>
-      <span class="trading-panel__profit-value">+${{ ui.potentialReturn }}</span>
-    </div>
+<div class="trading-panel__profit"><span class="trading-panel__profit-label">Disponível: {{ ui.availableBalance.toFixed(2) }} USDT</span><span class="trading-panel__profit-value">{{ ui.currentQuote ? ui.currentQuote.toFixed(2) + ' USDT' : 'Aguardando cotação' }}</span><small>Taxa demo: 0,1% · Compra inclui taxa</small><small>Vendas: valor bruto antes da taxa</small><small>Ativo livre: {{ ui.currentQuantity.toFixed(8) }}</small></div>
 
-    <label class="order-mode"><input v-model="pendingMode" type="checkbox" /> Criar ordem para executar depois</label><div class="trading-panel__actions d-flex flex-column gap-2">
+    <label class="order-mode"><input v-model="pendingMode" type="checkbox" /> Ordem limitada</label><label v-if="pendingMode" class="order-mode">Preço limite (USDT)<input v-model.number="limitPrice" type="number" min="0.00000001" step="any" /></label><div class="trading-panel__actions d-flex flex-column gap-2">
       <button type="button" class="btn-order btn-order--buy" @click="submitOrder('buy')">
         <i class="icon-chevron-up" aria-hidden="true" />
         SIMULAR COMPRA
@@ -42,7 +39,7 @@
       </button>
     </div>
 
-    <p class="simulation-note">Ordens locais, sem execução ou movimentação financeira.</p><div class="trading-panel__tabs d-flex">
+    <p v-if="ui.error" role="alert" class="simulation-note">{{ ui.error }}</p><p class="simulation-note">Saldo e ativos fictícios. Ordens limitadas são verificadas enquanto o app está aberto.</p><div class="trading-panel__tabs d-flex">
       <button
         v-for="tab in tabs"
         :key="tab.id"
@@ -61,9 +58,9 @@
 
     <div class="trading-panel__footer">
       <div class="trading-panel__footer-labels d-flex justify-content-between">
-        <span class="text-buy">${{ ui.footerStats.buyTotal.toFixed(2) }}</span>
+        <span class="text-buy">{{ ui.footerStats.buyTotal.toFixed(2) }} USDT</span>
         <span class="text-muted">vs</span>
-        <span class="text-sell">${{ ui.footerStats.sellTotal.toFixed(2) }}</span>
+        <span class="text-sell">{{ ui.footerStats.sellTotal.toFixed(2) }} USDT</span>
       </div>
       <div class="trading-panel__footer-bars d-flex">
         <div
@@ -87,9 +84,10 @@ import ActivityList from './ActivityList.vue'
 
 const ui = useTradingUiStore()
 const pendingMode = ref(false)
+const limitPrice = ref(null)
 const currentItems = computed(() => ui.activeTab === 'orders' ? ui.pendingOrders : ui.activeTab === 'history' ? ui.history : ui.operations)
-const emptyMessage = computed(() => ui.activeTab === 'orders' ? 'Nenhuma ordem pendente. Ative a opção acima para criar uma.' : ui.activeTab === 'history' ? 'Operações encerradas e ordens canceladas aparecerão aqui.' : 'Nenhuma operação. Simule uma compra ou venda.')
-function submitOrder(type) { pendingMode.value ? ui.queueOrder(type) : ui.placeOrder(type) }
+const emptyMessage = computed(() => ui.activeTab === 'orders' ? 'Nenhuma ordem pendente. Ative Ordem limitada e informe o preço.' : ui.activeTab === 'history' ? 'Execuções e ordens canceladas aparecerão aqui.' : 'Nenhuma operação. Simule uma compra ou venda.')
+function submitOrder(type) { pendingMode.value ? ui.queueOrder(type, limitPrice.value) : ui.placeOrder(type) }
 
 const { formatted: countdown } = useCandleCountdown(60_000)
 
@@ -377,5 +375,5 @@ function onAmountInput(event) {
 @media (max-width: 760px) {
   .trading-panel { width: 100%; min-width: 0; height: auto; min-height: 440px; border-left: 0; border-top: 1px solid var(--border-color); }
 }
-.order-mode { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 8px; margin-bottom: 12px; }
+.order-mode { font-size: 0.75rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 </style>

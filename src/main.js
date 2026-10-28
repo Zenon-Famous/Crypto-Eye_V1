@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 
 import App from './App.vue'
+import { useTradingUiStore } from './stores/tradingUi.store.js'
 import { createPinia } from 'pinia'
 import router from '@/router/index.js'
 import ElementPlus from 'element-plus'
@@ -14,5 +15,6 @@ const app = createApp(App)
 app.use(ElementPlus)
 
 app.use(createPinia());
+useTradingUiStore().hydrate();
 app.use(router);
 app.mount('#app');
