@@ -7,6 +7,7 @@ import { useTradingUiStore } from '../src/stores/tradingUi.store.js'
 const storage = new Map()
 globalThis.localStorage = { getItem: key => storage.get(key) ?? null, setItem: (key,value) => storage.set(key,value) }
 beforeEach(() => { setActivePinia(createPinia()); storage.clear() })
+function releaseCooldown(store) { store.lastActionAt = Date.now() - 60000; store.lastExecutionAt = Date.now() - 60000 }
 function account() { const store = useTradingUiStore(); store.updateQuote('BTC/USDT',100); return store }
 
 test('buy debits budget including fee; sale credits proceeds and realizes profit', () => {
@@ -15,6 +16,7 @@ test('buy debits budget including fee; sale credits proceeds and realizes profit
   assert.ok(Math.abs(store.balance - 9000) < 0.00001)
   assert.ok(store.holdings['BTC/USDT'].quantity > 9.99)
   assert.ok(store.totalFees > 0.99)
+  releaseCooldown(store)
   store.updateQuote('BTC/USDT',120)
   assert.equal(store.recordOperation('sell',600,'BTC/USDT'), true)
   assert.ok(store.balance > 9599)
@@ -51,6 +53,7 @@ test('limit buys reserve funds and fill exactly once at the limit or better', ()
 test('sell limits reserve assets; cancelling releases the reservation', () => {
   const store = account()
   store.recordOperation('buy',1000,'BTC/USDT')
+  releaseCooldown(store)
   store.setTradeAmount(1000)
   assert.equal(store.queueOrder('sell',120),true)
   assert.ok(store.currentQuantity < 2)
@@ -64,6 +67,7 @@ test('sell limits reserve assets; cancelling releases the reservation', () => {
 test('saved account restores balances, holdings and reservations without trusting stale prices', () => {
   const store = account()
   store.recordOperation('buy',1000,'BTC/USDT')
+  releaseCooldown(store)
   store.setTradeAmount(100)
   store.queueOrder('buy',80)
   store.saveProfile('Davi')
@@ -121,6 +125,7 @@ test('withdrawals never spend money reserved by pending orders', () => {
 test('sell limits execute when price crosses and charge exactly one fee', () => {
   const store = account()
   store.recordOperation('buy',1000,'BTC/USDT')
+  releaseCooldown(store)
   store.setTradeAmount(600)
   store.queueOrder('sell',120)
   store.updateQuote('BTC/USDT',121)
@@ -131,4 +136,56 @@ test('sell limits execute when price crosses and charge exactly one fee', () => 
   const fees = store.totalFees
   store.updateQuote('BTC/USDT',122)
   assert.equal(store.totalFees,fees)
+})
+
+test('one trading action per rolling minute across sides, markets and pending submissions', t => {
+  let now = 1900000000000
+  t.mock.method(Date,'now',() => now)
+  const store = account()
+  assert.equal(store.placeOrder('buy'),true)
+  const balance = store.balance
+  assert.equal(store.placeOrder('buy'),false)
+  store.assetPair = 'ETH/USDT'
+  store.updateQuote('ETH/USDT',100)
+  assert.equal(store.queueOrder('buy',80),false)
+  assert.equal(store.balance,balance)
+  now += 59999
+  assert.equal(store.cooldownRemaining(),1)
+  assert.equal(store.placeOrder('buy'),false)
+  now += 1
+  store.updateQuote('ETH/USDT',100)
+  assert.equal(store.cooldownRemaining(),0)
+  assert.equal(store.placeOrder('buy'),true)
+})
+test('reloading retains cooldown and invalid trades do not consume the interval', t => {
+  t.mock.method(Date,'now',() => 1900000000000)
+  const store = account()
+  assert.equal(store.placeOrder('sell'),false)
+  assert.equal(store.cooldownRemaining(),0)
+  assert.equal(store.placeOrder('buy'),true)
+  setActivePinia(createPinia())
+  const restored = useTradingUiStore()
+  restored.hydrate()
+  restored.updateQuote('BTC/USDT',100)
+  assert.equal(restored.cooldownRemaining(),60)
+  assert.equal(restored.placeOrder('buy'),false)
+})
+test('automatic limit fills are spaced one minute apart', t => {
+  let now = 1900000000000
+  t.mock.method(Date,'now',() => now)
+  const store = account()
+  store.queueOrder('buy',90)
+  now += 60000
+  store.updateQuote('BTC/USDT',100)
+  store.queueOrder('buy',85)
+  now += 60000
+  store.updateQuote('BTC/USDT',80)
+  assert.equal(store.history.length,1)
+  assert.equal(store.pendingOrders.length,1)
+  store.updateQuote('BTC/USDT',79)
+  assert.equal(store.history.length,1)
+  now += 60000
+  store.updateQuote('BTC/USDT',79)
+  assert.equal(store.history.length,2)
+  assert.equal(store.pendingOrders.length,0)
 })

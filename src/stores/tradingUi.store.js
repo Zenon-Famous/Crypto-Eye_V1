@@ -3,6 +3,7 @@ import { FEE_RATE, PAIRS, round, availableCash, availableQuantity, validateTrade
 const STORAGE_KEY = 'crypto-eye-paper-account-v1'
 const freshState = () => ({
   assetPair: 'BTC/USDT', assetTag: 'Spot demo', timeframe: 'M1', balance: 10000,
+  lastActionAt: 0, lastExecutionAt: 0,
   tradeAmount: 100, activeTab: 'operations', operations: [], pendingOrders: [], history: [],
   notifications: [], profile: { name: 'Visitante', currency: 'USDT' }, holdings: {}, quotes: {},
   realizedPnl: 0, totalFees: 0, deposits: 10000, error: '', persistenceError: '', hydrated: false,
@@ -23,6 +24,13 @@ export const useTradingUiStore = defineStore('tradingUi', {
     },
   },
   actions: {
+    cooldownRemaining(now = Date.now()) {
+      return Math.min(60, Math.max(0, Math.ceil((Math.max(this.lastActionAt, this.lastExecutionAt) + 60000 - now) / 1000)))
+    },
+    assertActionAllowed() {
+      const seconds = this.cooldownRemaining()
+      if (seconds) throw new Error('Aguarde ' + seconds + 's para enviar outra ordem.')
+    },
     freeQuantity(pair) { return availableQuantity(this, pair) },
     withdrawDemoFunds(value) {
       const amount = Number(value)
@@ -50,6 +58,10 @@ export const useTradingUiStore = defineStore('tradingUi', {
         }
         if (new Set(saved.pendingOrders.map(o => o.id)).size !== saved.pendingOrders.length || availableCash(saved) < -1e-8 || PAIRS.some(pair => availableQuantity(saved, pair) < -1e-8)) throw new Error('invalid reserves')
         for (const key of ['balance', 'holdings', 'pendingOrders', 'history', 'operations', 'notifications', 'realizedPnl', 'totalFees', 'deposits']) this[key] = saved[key]
+        for (const key of ['lastActionAt','lastExecutionAt']) {
+          const timestamp = saved[key] ?? 0
+          this[key] = Number.isFinite(timestamp) && timestamp >= 0 ? Math.min(timestamp,Date.now()) : 0
+        }
         this.profile.name = String(saved.profile?.name || 'Visitante').slice(0,60)
         for (const trade of this.history.filter(item => item.status === 'Executada')) this.footerStats[trade.type === 'buy' ? 'buyTotal' : 'sellTotal'] += Number(trade.notional) || 0
       } catch { this.persistenceError = 'Não foi possível restaurar a conta salva. O saldo inicial está sendo exibido; o arquivo anterior não será sobrescrito nesta sessão.' }
@@ -58,7 +70,7 @@ export const useTradingUiStore = defineStore('tradingUi', {
       if (this.persistenceError) return
       try {
         const data = { version: 1 }
-        for (const key of ['balance','holdings','pendingOrders','history','operations','notifications','realizedPnl','totalFees','deposits','profile']) data[key] = this[key]
+        for (const key of ['balance','holdings','pendingOrders','history','operations','notifications','realizedPnl','totalFees','deposits','profile','lastActionAt','lastExecutionAt']) data[key] = this[key]
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
       } catch { this.persistenceError = 'O navegador não permitiu salvar a conta. Mantenha esta página aberta para preservar os dados desta sessão.' }
     },
@@ -92,12 +104,14 @@ export const useTradingUiStore = defineStore('tradingUi', {
     queueOrder(type, limitPrice) {
       this.error = ''
       try {
+        this.assertActionAllowed()
         const price = Number(limitPrice)
         validateTrade(this, type, this.tradeAmount, this.assetPair, price)
         const quantity = Math.floor(this.tradeAmount / (type === 'buy' ? 1 + FEE_RATE : 1) / price * 1e8) / 1e8
         if (quantity <= 0) throw new Error('Quantidade abaixo da precisão disponível.')
         const order = { id: crypto.randomUUID(), type, pair: this.assetPair, value: this.tradeAmount, limitPrice: price, quantity, time: new Date().toLocaleString('pt-BR'), status: 'Pendente' }
         this.pendingOrders.unshift(order)
+        this.lastActionAt = Date.now()
         this.notify(`Ordem limitada de ${order.pair} criada. Saldo reservado.`)
         this.activeTab = 'orders'
         const quote = this.quotes[order.pair]
@@ -118,6 +132,7 @@ export const useTradingUiStore = defineStore('tradingUi', {
     executeOrder(id) {
       const order = this.pendingOrders.find(item => item.id === id)
       if (!order) return false
+      if (this.lastExecutionAt && Date.now() - this.lastExecutionAt < 60000) return false
       try {
         const price = this.quoteFor(order.pair)
         if (order.type === 'buy' ? price > order.limitPrice : price < order.limitPrice) return false
@@ -141,8 +156,12 @@ export const useTradingUiStore = defineStore('tradingUi', {
     recordOperation(type, value, pair, order) {
       this.error = ''
       try {
+        if (!order) this.assertActionAllowed()
+        else if (this.lastExecutionAt && Date.now() - this.lastExecutionAt < 60000) return false
         const price = this.quoteFor(pair)
         const settled = settleTrade(this, type, value, pair, price, order?.id, order?.quantity)
+        this.lastExecutionAt = Date.now()
+        if (!order) this.lastActionAt = this.lastExecutionAt
         this.balance = settled.balance
         this.holdings[pair] = settled.holding
         this.realizedPnl = round(this.realizedPnl + settled.realizedPnl)
