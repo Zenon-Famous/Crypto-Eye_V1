@@ -1,6 +1,6 @@
 export function createWebSocket(crypto, timeframe, onMessage) {
   const socket = new WebSocket(
-    `${import.meta.env.VITE_WS_URL}/${crypto.toLowerCase()}@kline_${timeframe}`
+    `${import.meta.env.VITE_WS_URL || 'wss://stream.binance.com:9443/ws'}/${crypto.toLowerCase()}@kline_${timeframe}`
   );
 
   socket.onopen = () => console.log(`WS conectado: ${crypto}@${timeframe}`);

@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { createWebSocket } from "@/services/webSocket.service";
-import { HistoryCandleService } from "@/services/historyCandles.service";
 
 export const useBinanceStore = defineStore("binanceStore", {
   state: () => ({
@@ -12,10 +11,11 @@ export const useBinanceStore = defineStore("binanceStore", {
   actions: {
     connect(crypto, timeframe) {
       this.currentPair = crypto.toUpperCase();
-      console.log(this.socket, "socket")
-      if (this.socket && this.socket.readyState === 1) this.socket.close();
+      this.disconnect();
+      this.cryptosRealtime = [];
 
-      this.socket = createWebSocket(crypto, timeframe, (kline) => {
+      const socket = createWebSocket(crypto, timeframe, (kline) => {
+        if (this.socket !== socket || kline.s !== this.currentPair) return;
         const candle = {
           x: new Date(kline.t),
           y: [Number(kline.o), Number(kline.h), Number(kline.l), Number(kline.c)],
@@ -27,8 +27,10 @@ export const useBinanceStore = defineStore("binanceStore", {
           this.cryptosRealtime[this.cryptosRealtime.length - 1] = candle;
         } else {
           this.cryptosRealtime.push(candle);
+          if (this.cryptosRealtime.length > 1000) this.cryptosRealtime.shift();
         }
       });
+      this.socket = socket;
     },
 
     disconnect() {

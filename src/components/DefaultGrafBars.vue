@@ -1,16 +1,13 @@
 <template>
   <div class="chart-wrapper">
     <div class="chart-toolbar d-flex align-items-center">
-      <el-dialog
-      width="400px"
-      destroy-on-close
-      >
-      <ExchangeModal />
-      </el-dialog>
-
-      <span class="chart-toolbar__pair">
-        {{ pairLabel }}
-      </span>
+      <label for="market-pair">Mercado</label>
+      <select id="market-pair" v-model="selectedPair" :disabled="loading">
+        <option v-for="pair in pairs" :key="pair" :value="pair">{{ pair }}</option>
+      </select>
+      <span>1 min · Binance</span>
+      <span v-if="loading" role="status">Carregando cotações…</span>
+      <span v-else-if="error" role="alert">{{ error }} <button type="button" @click="changePair(selectedPair)">Tentar novamente</button></span>
     </div>
 
     <div
@@ -23,7 +20,7 @@
 <script setup>
 import {
   ref,
-  computed,
+  shallowRef,
   onMounted,
   onUnmounted,
   watch,
@@ -37,36 +34,24 @@ import {
 
 import { useBinanceStore } from '@/stores/binanceWebSocket.store'
 import { useBinanceHistoryStore } from '@/stores/binanceHistory.store'
-import { useBinanceExchangeInfoStore } from '@/stores/binanceExchangeInfo.store'
-import ExchangeModal from './trading/ExchangeModal.vue'
+import { useTradingUiStore } from '@/stores/tradingUi.store'
+
 
 const chartContainer = ref(null)
 
-const chart = ref(null)
-const candleSeries = ref(null)
-const volumeSeries = ref(null)
+const chart = shallowRef(null)
+const candleSeries = shallowRef(null)
+const volumeSeries = shallowRef(null)
 
 const wsStore = useBinanceStore()
 const historyStore = useBinanceHistoryStore()
-const exchangeInfoStore = useBinanceExchangeInfoStore()
-
-const selectedPair = ref('BTCUSDT');
-const emit = defineEmits(['loading'])
-
-const pairLabel = computed(() => selectedPair.value)
-
-const cryptos = computed(() => {
-  return (
-    exchangeInfoStore.exchangeInfo?.symbols
-      ?.filter(
-        (symbol) => symbol.status === 'TRADING',
-      )
-      .map(
-        (symbol) => symbol.symbol,
-      ) || []
-  )
-})
-
+const ui = useTradingUiStore()
+const selectedPair = ref('BTCUSDT')
+const pairs = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT']
+const loading = ref(false)
+const error = ref('')
+let disposed = false
+let resizeObserver
 const UP_COLOR = '#00c582'
 const DOWN_COLOR = '#ff2d55'
 
@@ -132,7 +117,7 @@ function initChart() {
     },
   })
 
-  const resizeObserver = new ResizeObserver(() => {
+  resizeObserver = new ResizeObserver(() => {
     if (!chart.value || !chartContainer.value) return
 
     chart.value.applyOptions({
@@ -143,7 +128,7 @@ function initChart() {
 
   resizeObserver.observe(chartContainer.value)
 
-  chart.value._resizeObserver = resizeObserver
+
 }
 
 function mapCandles(candles) {
@@ -226,79 +211,48 @@ function updateRealtimeCandles() {
   })
 }
 
-function handleSocketMessage() {
-  updateRealtimeCandles()
-}
-
 async function changePair(pair) {
+  if (loading.value || disposed) return
+  loading.value = true
+  error.value = ''
+  wsStore.disconnect()
+  candleSeries.value.setData([])
+  volumeSeries.value.setData([])
+  ui.assetPair = pair.replace(/USDT$/, '/USDT')
   try {
-    wsStore.socket?.removeEventListener(
-      'message',
-      handleSocketMessage,
-    )
-
-    wsStore.disconnect()
-
     const endTime = Date.now()
-
-    const startTime =
-      endTime - 24 * 60 * 60 * 10000
-
-    await historyStore.getHistory(
-      pair,
-      '1m',
-      startTime,
-      endTime,
-    )
-
+    await historyStore.getHistory(pair, '1m', endTime - 24 * 60 * 60 * 1000, endTime)
+    if (disposed) return
+    if (!historyStore.cryptosHistory.length) throw new Error('empty history')
     loadHistory()
-
     wsStore.connect(pair, '1m')
-
-    wsStore.socket?.addEventListener(
-      'message',
-      handleSocketMessage,
-    )
-  } catch (error) {
-    return error
+    const socket = wsStore.socket
+    socket.addEventListener('error', () => {
+      if (!disposed && wsStore.socket === socket) error.value = 'Atualização ao vivo indisponível.'
+    })
+    socket.addEventListener('close', () => {
+      if (!disposed && wsStore.socket === socket) error.value = 'Conexão encerrada. Reconecte para atualizar.'
+    })
+  } catch {
+    if (!disposed) error.value = 'Não foi possível carregar as cotações.'
+  } finally {
+    loading.value = false
   }
 }
 
-onMounted(async () => {
+onMounted(() => {
   initChart()
-
-  loadHistory()
-
-  wsStore.connect(
-    selectedPair.value,
-    '1m',
-  )
-
-  wsStore.socket?.addEventListener(
-    'message',
-    handleSocketMessage,
-  )
+  changePair(selectedPair.value)
 })
-
 onUnmounted(() => {
-  wsStore.socket?.removeEventListener(
-    'message',
-    handleSocketMessage,
-  )
-
-  chart.value?._resizeObserver?.disconnect()
-
+  disposed = true
+  resizeObserver?.disconnect()
   wsStore.disconnect()
+  chart.value?.remove()
 })
-
-watch(selectedPair, async (newPair) => {
-  emit('loading', true)
-
-  try {
-    await changePair(newPair)
-  } finally {
-    emit('loading', false)
-  }
+watch(selectedPair, changePair)
+watch(() => wsStore.cryptosRealtime.at(-1), () => {
+  if (!disposed) updateRealtimeCandles()
 })
 </script>
 
@@ -315,7 +269,7 @@ watch(selectedPair, async (newPair) => {
 .chart-toolbar {
   flex-shrink: 0;
   padding: 8px 12px;
-  gap: 12px;
+  gap: 12px; flex-wrap: wrap; color: var(--text-muted); font-size: 0.8rem;
   border-bottom: 1px solid var(--border-subtle);
 
   &__pair {
