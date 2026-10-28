@@ -28,3 +28,4 @@ dist-ssr
 .pnpm-store/
 .vercel/
 !.env.example
+/outputs/

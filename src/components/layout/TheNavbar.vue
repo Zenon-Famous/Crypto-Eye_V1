@@ -1,18 +1,9 @@
 <template>
   <header class="navbar-trading d-flex align-items-center">
     <div class="navbar-trading__left d-flex align-items-center">
-      <span class="navbar-trading__logo">crypto eye</span>
+      <RouterLink to="/" class="navbar-trading__logo">crypto eye</RouterLink>
       <nav class="navbar-trading__menu d-flex">
-        <a
-          v-for="item in menuItems"
-          :key="item"
-          href="#" aria-disabled="true" tabindex="-1"
-          class="navbar-trading__link"
-          @click.prevent
-        >
-          {{ item }}
-          <span v-if="item === 'Mais'" class="navbar-trading__chevron">▾</span>
-        </a>
+        <RouterLink v-for="item in menuItems" :key="item.to" :to="item.to" class="navbar-trading__link" active-class="navbar-trading__link--active" :exact-active-class="'navbar-trading__link--active'">{{ item.label }}</RouterLink>
       </nav>
     </div>
 
@@ -27,17 +18,17 @@
     </div>
 
     <div class="navbar-trading__right d-flex align-items-center">
-      <button class="navbar-trading__icon-btn" type="button" aria-label="Notificações indisponíveis" disabled>
+      <RouterLink to="/notificacoes" class="navbar-trading__icon-btn" aria-label="Notificações">
         <i class="icon-bell" aria-hidden="true" />
-      </button>
-      <button class="navbar-trading__icon-btn" type="button" aria-label="Perfil indisponível" disabled>
+      </RouterLink>
+      <RouterLink to="/perfil" class="navbar-trading__icon-btn" aria-label="Perfil">
         <i class="icon-person" aria-hidden="true" />
-      </button>
+      </RouterLink>
       <div class="navbar-trading__balance">
         <span class="navbar-trading__balance-label">Conta demonstrativa</span>
         <span class="navbar-trading__balance-value">${{ ui.balance.toFixed(2) }}</span>
       </div>
-      <button class="navbar-trading__deposit btn" type="button" disabled title="Depósitos indisponíveis na simulação">Depositar</button>
+      <RouterLink to="/carteira" class="navbar-trading__deposit btn">Saldo demo</RouterLink>
     </div>
   </header>
 </template>
@@ -48,12 +39,12 @@ import { useTradingUiStore } from '@/stores/tradingUi.store';
 
 const ui = useTradingUiStore()
 
-const menuItems = ['Trade', 'Comprar Cripto', 'Educação', 'Mais']
+const menuItems = [{ label: 'Trade', to: '/' }, { label: 'Comprar Cripto', to: '/comprar' }, { label: 'Educação', to: '/educacao' }, { label: 'Mais', to: '/mais' }]
 </script>
 
 <style lang="scss" scoped>
 .navbar-trading {
-  height: 52px;
+  min-height: 60px;
   padding: 0 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -70,12 +61,15 @@ const menuItems = ['Trade', 'Comprar Cripto', 'Educação', 'Mais']
     font-weight: 700;
     color: var(--green);
     text-transform: lowercase;
+    text-decoration: none;
     letter-spacing: -0.02em;
   }
 
   &__menu {
     gap: 20px;
   }
+
+  &__link--active { color: var(--green); }
 
   &__link {
     color: var(--text-muted);

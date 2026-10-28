@@ -31,12 +31,12 @@
       <span class="trading-panel__profit-value">+${{ ui.potentialReturn }}</span>
     </div>
 
-    <div class="trading-panel__actions d-flex flex-column gap-2">
-      <button type="button" class="btn-order btn-order--buy" @click="ui.placeOrder('buy')">
+    <label class="order-mode"><input v-model="pendingMode" type="checkbox" /> Criar ordem para executar depois</label><div class="trading-panel__actions d-flex flex-column gap-2">
+      <button type="button" class="btn-order btn-order--buy" @click="submitOrder('buy')">
         <i class="icon-chevron-up" aria-hidden="true" />
         SIMULAR COMPRA
       </button>
-      <button type="button" class="btn-order btn-order--sell" @click="ui.placeOrder('sell')">
+      <button type="button" class="btn-order btn-order--sell" @click="submitOrder('sell')">
         <i class="icon-chevron-down" aria-hidden="true" />
         SIMULAR VENDA
       </button>
@@ -56,13 +56,7 @@
     </div>
 
     <div class="trading-panel__content flex-grow-1 d-flex flex-column">
-      <OperationsTable v-if="ui.activeTab === 'operations'" :operations="ui.operations" />
-      <div v-else-if="ui.activeTab === 'orders'" class="trading-panel__placeholder">
-        Nenhuma ordem pendente
-      </div>
-      <div v-else class="trading-panel__placeholder">
-        Histórico vazio
-      </div>
+      <ActivityList :items="currentItems" :mode="ui.activeTab" :empty="emptyMessage" />
     </div>
 
     <div class="trading-panel__footer">
@@ -86,12 +80,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useTradingUiStore } from '@/stores/tradingUi.store'
 import { useCandleCountdown } from '@/composables/useCandleCountdown'
-import OperationsTable from './OperationsTable.vue'
+import ActivityList from './ActivityList.vue'
 
 const ui = useTradingUiStore()
+const pendingMode = ref(false)
+const currentItems = computed(() => ui.activeTab === 'orders' ? ui.pendingOrders : ui.activeTab === 'history' ? ui.history : ui.operations)
+const emptyMessage = computed(() => ui.activeTab === 'orders' ? 'Nenhuma ordem pendente. Ative a opção acima para criar uma.' : ui.activeTab === 'history' ? 'Operações encerradas e ordens canceladas aparecerão aqui.' : 'Nenhuma operação. Simule uma compra ou venda.')
+function submitOrder(type) { pendingMode.value ? ui.queueOrder(type) : ui.placeOrder(type) }
+
 const { formatted: countdown } = useCandleCountdown(60_000)
 
 const tabs = [
@@ -378,4 +377,5 @@ function onAmountInput(event) {
 @media (max-width: 760px) {
   .trading-panel { width: 100%; min-width: 0; height: auto; min-height: 440px; border-left: 0; border-top: 1px solid var(--border-color); }
 }
+.order-mode { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 8px; margin-bottom: 12px; }
 </style>

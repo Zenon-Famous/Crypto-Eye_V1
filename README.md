@@ -29,3 +29,7 @@ Importe o repositório GitHub, selecione Vite e use `npm run build` com saída `
 3. `chore/vercel-deployment`: configuração Vercel, documentação e exemplo de ambiente.
 
 Branches, commits, publicação e deploy devem ser feitos somente após validar o build e revisar o diff.
+
+## Abas da plataforma
+
+A navegação inclui Trade, Comprar Cripto, Educação, Mais, Perfil, Notificações e Carteira demonstrativa. Comprar Cripto consulta uma cotação pública e registra a simulação no Trade. Ordens pendentes são executadas ou canceladas manualmente; o histórico lista operações encerradas e ordens canceladas. Notificações registram as ações da sessão e podem ser marcadas como lidas. Perfil e saldo demo ficam em memória até recarregar a página. O crédito demo é ilustrativo e não é debitado pelas simulações.
