@@ -14,7 +14,7 @@
         <p v-if="quoteLoading" role="status">Consultando cotação…</p>
         <p v-if="quoteError" role="alert">{{ quoteError }}</p>
         <button type="button" class="secondary-action" :disabled="quoteLoading" @click="fetchQuote">Atualizar cotação</button>
-        <button class="primary-action" :disabled="quoteLoading || !price" type="submit">Registrar compra simulada</button>
+        <button class="primary-action" :disabled="quoteLoading || !price || remaining > 0" type="submit">{{ remaining ? cooldownLabel : 'Registrar compra simulada' }}</button>
         <p v-if="feedback" role="status">{{ feedback }} <RouterLink to="/">Ver operações</RouterLink></p>
       </form>
       <aside class="section-aside"><h2>Como funciona</h2><ol><li>Escolha uma das moedas disponíveis.</li><li>Informe um valor e confira a estimativa.</li><li>Registre a simulação e acompanhe em Trade.</li></ol><p>A estimativa desconta a taxa de 0,1% do orçamento e converte o restante em ativos fictícios. A execução usa a última cotação disponível, com validade de 30 segundos. Não há dinheiro real.</p><RouterLink to="/carteira">Abrir carteira demonstrativa</RouterLink></aside>
@@ -56,9 +56,11 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import http from '@/services/httpBinance'
+import { useTradingCooldown } from '@/composables/useTradingCooldown'
 import { useTradingUiStore } from '@/stores/tradingUi.store'
 const route = useRoute()
 const ui = useTradingUiStore()
+const { remaining, label: cooldownLabel } = useTradingCooldown()
 const asset = ref('BTC')
 const amount = ref(100)
 const credit = ref(1000)

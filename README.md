@@ -25,3 +25,7 @@ A conta, perfil, carteira, ordens e histórico são salvos em localStorage com v
 ## Organização
 
 `src/domain/broker.js` implementa reservas, validações e liquidação. O store `tradingUi` coordena a conta e persistência. Serviços acessam dados públicos; o template mantém cotações atualizadas entre as páginas. O gráfico usa histórico e WebSocket. Testes cobrem liquidação, taxas, insuficiência de fundos, preço vencido, reservas, execução única, restauração e saques.
+
+## Intervalo entre ações
+
+O envio de compras, vendas e novas ordens limitadas compartilha um intervalo de 60 segundos, salvo com a conta local. Envios inválidos não consomem o intervalo. Execuções automáticas de ordens limitadas também respeitam 60 segundos entre negócios. Cancelamentos continuam disponíveis para liberar reservas. O painel mostra a contagem regressiva e mantém cotação, taxa e quantidade em um detalhe recolhido.

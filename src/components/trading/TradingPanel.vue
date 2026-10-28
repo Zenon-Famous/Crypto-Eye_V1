@@ -26,20 +26,21 @@
       </div>
     </div>
 
-<div class="trading-panel__profit"><span class="trading-panel__profit-label">Disponível: {{ ui.availableBalance.toFixed(2) }} USDT</span><span class="trading-panel__profit-value">{{ ui.currentQuote ? ui.currentQuote.toFixed(2) + ' USDT' : 'Aguardando cotação' }}</span><small>Taxa demo: 0,1% · Compra inclui taxa</small><small>Vendas: valor bruto antes da taxa</small><small>Ativo livre: {{ ui.currentQuantity.toFixed(8) }}</small></div>
+    <p class="available-funds">Disponível <strong>{{ ui.availableBalance.toFixed(2) }} USDT</strong></p>
+    <details class="order-details"><summary>Detalhes da ordem</summary><dl><div><dt>Cotação</dt><dd>{{ ui.currentQuote ? ui.currentQuote.toFixed(2) + ' USDT' : 'Indisponível' }}</dd></div><div><dt>Ativo disponível</dt><dd>{{ ui.currentQuantity.toFixed(8) }}</dd></div><div><dt>Taxa demo</dt><dd>0,1%</dd></div></dl><p>A compra inclui a taxa; na venda ela é descontada do valor bruto.</p></details>
 
     <label class="order-mode"><input v-model="pendingMode" type="checkbox" /> Ordem limitada</label><label v-if="pendingMode" class="order-mode">Preço limite (USDT)<input v-model.number="limitPrice" type="number" min="0.00000001" step="any" /></label><div class="trading-panel__actions d-flex flex-column gap-2">
-      <button type="button" class="btn-order btn-order--buy" @click="submitOrder('buy')">
+      <button type="button" class="btn-order btn-order--buy" :disabled="remaining > 0" @click="submitOrder('buy')">
         <i class="icon-chevron-up" aria-hidden="true" />
         SIMULAR COMPRA
       </button>
-      <button type="button" class="btn-order btn-order--sell" @click="submitOrder('sell')">
+      <button type="button" class="btn-order btn-order--sell" :disabled="remaining > 0" @click="submitOrder('sell')">
         <i class="icon-chevron-down" aria-hidden="true" />
         SIMULAR VENDA
       </button>
     </div>
 
-    <p v-if="ui.error" role="alert" class="simulation-note">{{ ui.error }}</p><p class="simulation-note">Saldo e ativos fictícios. Ordens limitadas são verificadas enquanto o app está aberto.</p><div class="trading-panel__tabs d-flex">
+    <p v-if="ui.error" role="alert" class="simulation-note">{{ ui.error }}</p><p class="simulation-note">{{ remaining ? cooldownLabel : 'Conta demo · 1 ação por minuto' }}</p><div class="trading-panel__tabs d-flex">
       <button
         v-for="tab in tabs"
         :key="tab.id"
@@ -79,10 +80,12 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useTradingUiStore } from '@/stores/tradingUi.store'
+import { useTradingCooldown } from '@/composables/useTradingCooldown'
 import { useCandleCountdown } from '@/composables/useCandleCountdown'
 import ActivityList from './ActivityList.vue'
 
 const ui = useTradingUiStore()
+const { remaining, label: cooldownLabel } = useTradingCooldown()
 const pendingMode = ref(false)
 const limitPrice = ref(null)
 const currentItems = computed(() => ui.activeTab === 'orders' ? ui.pendingOrders : ui.activeTab === 'history' ? ui.history : ui.operations)
@@ -174,30 +177,6 @@ function onAmountInput(event) {
     font-size: 0.7rem;
     color: var(--text-muted);
     margin-bottom: 6px;
-  }
-
-  &__profit {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12px;
-    margin-bottom: 14px;
-    border-radius: 8px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-  }
-
-  &__profit-label {
-    font-size: 0.75rem;
-    color: var(--green);
-    font-weight: 500;
-  }
-
-  &__profit-value {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--green);
-    margin-top: 2px;
   }
 
   &__actions {
@@ -376,4 +355,14 @@ function onAmountInput(event) {
   .trading-panel { width: 100%; min-width: 0; height: auto; min-height: 440px; border-left: 0; border-top: 1px solid var(--border-color); }
 }
 .order-mode { font-size: 0.75rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.available-funds { display: flex; justify-content: space-between; gap: 8px; color: var(--text-muted); font-size: 0.75rem; margin-bottom: 12px !important; }
+.available-funds strong { color: var(--text-color); font-weight: 500; }
+.order-details { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px; }
+.order-details summary { cursor: pointer; padding: 4px 0; }
+.order-details dl { margin: 8px 0; }
+.order-details dl div { display: flex; justify-content: space-between; gap: 8px; margin: 6px 0; }
+.order-details dt { font-weight: 400; }
+.order-details dd { margin: 0; color: var(--text-color); }
+.order-details p { line-height: 1.5; }
+.btn-order:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: none; }
 </style>
